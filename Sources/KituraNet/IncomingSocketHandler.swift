@@ -58,7 +58,7 @@ public class IncomingSocketHandler {
     private weak var manager: IncomingSocketManager?
     
     private let readBuffer = NSMutableData()
-    private let writeBuffer = NSMutableData()
+    private var writeBuffer: NSMutableData?
     private var writeBufferPosition = 0
     private var preparingToClose = false
     
@@ -168,7 +168,7 @@ public class IncomingSocketHandler {
     /// Inner function to write out any buffered data now that the socket can accept more data,
     /// invoked in serial queue.
     private func handleWriteHelper() {
-        if  writeBuffer.length != 0 {
+        if let writeBuffer = writeBuffer {
             do {
                 let amountToWrite = writeBuffer.length - writeBufferPosition
                 
@@ -190,7 +190,7 @@ public class IncomingSocketHandler {
                     writeBufferPosition += written
                 }
                 else {
-                    writeBuffer.length = 0
+                    self.writeBuffer = nil
                     writeBufferPosition = 0
                 }
             }
@@ -202,7 +202,7 @@ public class IncomingSocketHandler {
                 }
                 
                 // There was an error writing to the socket, close the socket
-                writeBuffer.length = 0
+                self.writeBuffer = nil
                 writeBufferPosition = 0
                 prepareToClose()
             }
@@ -214,7 +214,7 @@ public class IncomingSocketHandler {
             #endif
         }
         
-        if preparingToClose && writeBuffer.length == writeBufferPosition {
+        if preparingToClose && writeBuffer == nil {
             close()
         }
     }
@@ -250,7 +250,7 @@ public class IncomingSocketHandler {
         do {
             let written: Int
             
-            if  writeBuffer.length == 0 {
+            if  writeBuffer == nil {
                 written = try socket.write(from: bytes, bufSize: length)
             }
             else {
@@ -259,7 +259,10 @@ public class IncomingSocketHandler {
             
             if written != length {
                 IncomingSocketHandler.socketWriterQueue.sync() { [unowned self] in
-                    self.writeBuffer.append(bytes + written, length: length - written)
+                    if self.writeBuffer == nil {
+                        self.writeBuffer = NSMutableData()
+                    }
+                    self.writeBuffer?.append(bytes + written, length: length - written)
                 }
                 
                 #if os(OSX) || os(iOS) || os(tvOS) || os(watchOS) || GCD_ASYNCH
@@ -285,7 +288,7 @@ public class IncomingSocketHandler {
         if !preparingToClose {
             preparingToClose = true
             
-            if  writeBuffer.length == writeBufferPosition  {
+            if  writeBuffer == nil  {
                 close()
             }
         }
