@@ -118,6 +118,7 @@ public class IncomingHTTPSocketProcessor: IncomingSocketProcessor {
     /// Close the socket and mark this handler as no longer in progress.
     public func close() {
         handler?.prepareToClose()
+        handler?.processor = nil
     }
     
     /// Called by the `IncomingSocketHandler` to tell us that the socket has been closed
