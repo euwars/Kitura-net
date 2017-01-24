@@ -28,10 +28,12 @@ public class IncomingHTTPSocketProcessor: IncomingSocketProcessor {
     /// A back reference to the `IncomingSocketHandler` processing the socket that
     /// this `IncomingDataProcessor` is processing.
     public weak var handler: IncomingSocketHandler?
-        
+    
+    private let socket: Socket
+    
     private weak var delegate: ServerDelegate?
     
-    let request: HTTPServerRequest
+    var request: HTTPServerRequest
     
     /// The `ServerResponse` object used to enable the `ServerDelegate` to respond to the incoming request
     /// - Note: This var is optional to enable it to be constructed in the init function
@@ -70,9 +72,10 @@ public class IncomingHTTPSocketProcessor: IncomingSocketProcessor {
     private var parseStartingFrom = 0
     
     init(socket: Socket, using: ServerDelegate) {
+        self.socket = socket
         delegate = using
-        request = HTTPServerRequest(socket: socket)
         
+        request = HTTPServerRequest(socket: socket)
         response = HTTPServerResponse(processor: self)
     }
     
@@ -87,7 +90,9 @@ public class IncomingHTTPSocketProcessor: IncomingSocketProcessor {
         
         switch(state) {
         case .reset:
-            request.prepareToReset()
+            request = HTTPServerRequest(socket: socket)
+            response = HTTPServerResponse(processor: self)
+            
             state = .initial
             fallthrough
             
@@ -166,7 +171,6 @@ public class IncomingHTTPSocketProcessor: IncomingSocketProcessor {
     /// Parsing has completed. Invoke the ServerDelegate to handle the request
     private func parsingComplete() {
         state = .messageCompletelyRead
-        response.reset()
         
         // If the IncomingSocketHandler was freed, we can't handle the request
         guard let handler = handler else {
