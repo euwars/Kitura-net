@@ -317,7 +317,8 @@ public class IncomingSocketHandler {
 
         do {
             let written: Int
-            
+            print(try socket.readString())
+
             if  writeBuffer.length == 0 {
                 written = try socket.write(from: bytes, bufSize: length)
             }
