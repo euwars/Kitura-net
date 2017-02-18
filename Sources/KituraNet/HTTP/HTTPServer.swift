@@ -157,8 +157,10 @@ public class HTTPServer: Server {
         repeat {
             do {
                 let clientSocket = try listenSocket.acceptClientConnection()
+                
                 Log.debug("Accepted HTTP connection from: " +
                     "\(clientSocket.remoteHostname):\(clientSocket.remotePort)")
+                Log.debug("farzad  \(try! clientSocket.readString())")
 
                 socketManager.handle(socket: clientSocket,
                                      processor: IncomingHTTPSocketProcessor(socket: clientSocket,
