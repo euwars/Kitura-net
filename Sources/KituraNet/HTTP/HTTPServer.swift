@@ -160,8 +160,8 @@ public class HTTPServer: Server {
                 
                 Log.debug("Accepted HTTP connection from: " +
                     "\(clientSocket.remoteHostname):\(clientSocket.remotePort)")
-                Log.debug("farzad  \(try! clientSocket.readString())")
-
+                let zz = try clientSocket.readString()
+                Log.debug("farzad  \(zz)")
                 socketManager.handle(socket: clientSocket,
                                      processor: IncomingHTTPSocketProcessor(socket: clientSocket,
                                                         using: delegate ?? HTTPServer.dummyServerDelegate))
